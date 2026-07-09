@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -24,9 +23,6 @@ func New() (*sql.DB, error){
 	if err != nil {
 		return nil, err
 	}
-
-	stats := db.Stats()
-	fmt.Printf("%v\n", stats)
 
 
 

@@ -1,10 +1,12 @@
 package main
 
 import (
+
 	"fmt"
 	"gopal-sub/auth_service/internal/database"
 	"gopal-sub/auth_service/internal/user"
 	"log"
+
 
 	"github.com/joho/godotenv"
 )
@@ -21,8 +23,10 @@ func main(){
 		log.Fatalf(`database error  wowowo  %v`, err)
 	}
 	newRepo := user.NewRepository(db)
+	service := user.NewService(newRepo)
+	
+	service.Signup("gopddal@gmail.com", "hi there")
 	
 	fmt.Println("connected")
-	fmt.Println(newRepo)
 	defer db.Close()
 }
