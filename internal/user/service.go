@@ -46,3 +46,24 @@ func (s *Service) Signup(email string, password string) (User, error){
 
 }
 
+
+func (s *Service) Signin(email string, password string) (token string, err error){
+	user, err := s.repo.FindUserByEmail(email)
+	if err != nil {
+		// tasks -> if  user does not exist 
+		return "", err
+	}
+
+	
+
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		return "", err
+	}
+
+	//make jwt imp
+	return "testToken", nil
+	
+}
+

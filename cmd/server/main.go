@@ -32,7 +32,8 @@ func main(){
 	service := user.NewService(newRepo)
 	handler := user.NewHandler(service)
 
-	router.HandleFunc("/user", handler.SignUpHandler)
+	router.HandleFunc("POST /user", handler.SignUpHandler)
+	router.HandleFunc("POST /gettoken", handler.SigninHandler)
 
 	userServer := http.Server{
 		Addr:    ":3000",
