@@ -65,6 +65,7 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 
 func (h *Handler) SigninHandler(w http.ResponseWriter, r *http.Request){
 	var signinRequest SigninRequest
+	
 
 	decorder := json.NewDecoder(r.Body)
 	decorder.DisallowUnknownFields()
