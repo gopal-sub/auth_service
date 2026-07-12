@@ -6,12 +6,18 @@ import (
 	"gopal-sub/auth_service/internal/database"
 	"gopal-sub/auth_service/internal/user"
 	"log"
+	"net/http"
 
 
 	"github.com/joho/godotenv"
 )
 
+
+
 func main(){
+	router := http.NewServeMux()
+
+
 	err := godotenv.Load()
 	if err != nil{
 		log.Fatal("env did not load")
@@ -24,8 +30,16 @@ func main(){
 	}
 	newRepo := user.NewRepository(db)
 	service := user.NewService(newRepo)
-	
-	service.Signup("gopddal@gmail.com", "hi there")
+	handler := user.NewHandler(service)
+
+	router.HandleFunc("/user", handler.SignUpHandler)
+
+	userServer := http.Server{
+		Addr:    ":3000",
+		Handler: router,
+	}
+	userServer.ListenAndServe()
+
 	
 	fmt.Println("connected")
 	defer db.Close()
