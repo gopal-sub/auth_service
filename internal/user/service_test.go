@@ -160,11 +160,36 @@ func Test_DatabaseErrFindUser(t *testing.T){
 }
 func Test_DatabaseErrInsertUser(t *testing.T){
 	// arrange
+	repo := &FakeRepository{
+		findErr: nil,
+		createErr: dberr,
+	}
+	service := NewService(repo)
 	// act
+
+	_, err := service.Signup("test@gmail.com", "hi there")
+
 	// assert
+	if errors.Is(err, dberr){
+		t.Fatalf("exprected dberr error: %v", err)
+	}
 }
 func Test_UserExistsConflict(t *testing.T){
 	// arrange
+	userEmail := "userexists@gmail.com"
+	repo := &FakeRepository{
+		user: User{Email: userEmail},
+		findErr: userExistsConflict,
+		createErr: nil,
+	}
+	service := NewService(repo)
+
 	// act
+	_, err := service.Signup(userEmail, "hi there")
+
 	// assert
+
+	if !errors.Is(err, userExistsConflict){
+		t.Fatalf("expected error userExistsConflict %v", err)
+	}
 }

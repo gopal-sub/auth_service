@@ -34,11 +34,11 @@ func (s *Service) Signup(email string, password string) (User, error){
 		}
 		return newUser, nil
 	}
-	if err != nil{
-		return User{}, dberr
+	if err == nil{
+		return User{}, userExistsConflict
 	}
 
-	return User{}, userExistsConflict
+	return User{}, err
 
 
 
