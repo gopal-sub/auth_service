@@ -20,8 +20,7 @@ type SigninRequest struct {
 }
 
 type SigninResponse struct {
-	id string
-    Email    string 
+	Token string
 }
 
 

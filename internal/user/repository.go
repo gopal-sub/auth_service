@@ -9,6 +9,13 @@ import (
 type Repository struct{
 	db *sql.DB
 }
+
+
+type UserRepository interface{
+	FindUserByEmail(email string) (User, error)
+	Create(User) error
+}
+
 func NewRepository(db *sql.DB) *Repository{
 	return &Repository{
 		db: db,

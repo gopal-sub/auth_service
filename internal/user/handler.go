@@ -65,7 +65,7 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 
 func (h *Handler) SigninHandler(w http.ResponseWriter, r *http.Request){
 	var signinRequest SigninRequest
-	
+
 
 	decorder := json.NewDecoder(r.Body)
 	decorder.DisallowUnknownFields()
@@ -84,7 +84,11 @@ func (h *Handler) SigninHandler(w http.ResponseWriter, r *http.Request){
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
+
+	var signinResponse SigninResponse
+
+	signinResponse.Token = token
 	
-	json.NewEncoder(w).Encode(token)
+	json.NewEncoder(w).Encode(signinResponse)
 
 }
