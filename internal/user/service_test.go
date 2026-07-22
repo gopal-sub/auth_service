@@ -23,6 +23,102 @@ func (f *FakeRepository) Create(user User) error {
 	return  f.createErr
 }
 
+//signin tests -> table
+
+type signinTestCases struct{
+	name string
+
+	fakerepo *FakeRepository
+
+	email string
+	password string
+
+	expectedErr error
+	expectToken bool
+}
+
+
+
+func TestSignin(t *testing.T){
+
+	hashPassword, err := CreateHash("testpassword")
+	if err != nil {
+		t.Fatal("Password hash failed")
+	}
+
+	tests := []signinTestCases {
+		{
+			name: "SigninUserNotFound",
+			fakerepo: &FakeRepository {
+				findErr: sql.ErrNoRows,
+			},
+
+			email: "test@example.com",
+			password: "hi there",
+			
+			expectedErr: ErrInvalidCredentials,
+			expectToken: false,
+		},
+		{
+			name: "DBConnectionErr",
+
+			fakerepo: &FakeRepository{
+				findErr: dberr,
+			},
+			email: "test@example.com",
+			password: "hi there",
+			expectedErr: dberr,
+			expectToken: false,
+		},
+		{
+			name: "WrongPassword",
+			fakerepo: &FakeRepository{
+				user: User{Email: "testuser123@gmail.com", PasswordHash: hashPassword},
+				findErr: nil,
+			},
+			email: "testuser123@gmail.com",
+			password: "nadlnald",
+			expectedErr: ErrInvalidCredentials,
+			expectToken: false,
+		},
+		{
+			name: "RightUserAndPassword",
+			fakerepo: &FakeRepository{
+				user: User{Email: "test123@gmail.com", PasswordHash: hashPassword},
+				findErr: nil,
+			},
+			email: "test123@gmail.com",
+			password: "testpassword",
+			expectedErr: nil,
+			expectToken: true,
+		},
+	}
+
+	for _ ,tt := range tests{
+		tt := tt
+		t.Run(tt.name, func (t *testing.T) {
+			service := NewService(tt.fakerepo)
+			token, err := service.Signin(tt.email, tt.password)
+			if !errors.Is(err, tt.expectedErr){
+				t.Fatalf("expected %v  obtained %v", tt.expectedErr, err)
+			}
+			if tt.expectToken {
+				if token == ""{
+					t.Fatalf("exprected a valid token Err: %v", err)
+				}
+			}else {
+				if token != ""{
+					t.Fatalf("expected a token but got an empty string")
+				}
+			}
+
+			
+		})
+	}
+
+}
+
+
 
 func TestSigninUserNotFound(t *testing.T) {
 	//arrange
