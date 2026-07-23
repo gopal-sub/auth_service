@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"github.com/redis/go-redis/v9"
 	"context"
+	"fmt"
 )
 
 type OTPItem struct {
@@ -31,8 +32,11 @@ func NewOTPRepo(client *redis.Client) *Repository{
 
 func (s *Repository)SaveOTP(item OTPItem) error{
 	ctx := context.Background()
+	fmt.Println("inside save")
+	err := s.repo.Set(ctx, item.Email, item.Code, 10*time.Minute).Err()
+	//email => otp
+	// key val pair
 
-	err := s.repo.Set(ctx, item.Email, item, 10*time.Minute).Err()
 	if err != nil {
 		return err
 	}
@@ -80,10 +84,13 @@ func (s *OTPService) SendOTP(email string) error{
 		Email: email,
 		Code: GenerateOPT(),
 	}
+
+	fmt.Println("inside sendotp svc")
 	
 	if err := s.repo.SaveOTP(otpItem); err != nil {
 		return err
 	}
+
 	//send mail here
 	return nil
 }

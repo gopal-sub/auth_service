@@ -6,6 +6,7 @@ import (
 	"gopal-sub/auth_service/internal/database"
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
+	"gopal-sub/auth_service/internal/auth"
 	"log"
 	"net/http"
 
@@ -36,12 +37,16 @@ func main(){
 		log.Fatalf(`redis error  wowowo  %v`, err)
 	}
 	defer rdb.Close()
-	
+
 	
 	
 	newRepo := user.NewRepository(db)
 	service := user.NewService(newRepo)
 	handler := user.NewHandler(service)
+
+	redisNewRepo := auth.NewOTPRepo(rdb)
+	redisNewService := auth.NewOTPService(redisNewRepo)
+
 
 
 
