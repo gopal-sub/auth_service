@@ -5,12 +5,12 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"github.com/redis/go-redis/v9"
+	"context"
 )
 
 type OTPItem struct {
 	Email string
 	Code string
-	ExpiresAt time.Time
 }
 //repo 
 type Repository struct {
@@ -19,8 +19,42 @@ type Repository struct {
 
 type OTPRepository interface {
 	SaveOTP(item OTPItem) error
-	GetOTP(email string) (OTPItem, error)
+	GetOTP(email string) (string, error)
  	DeleteOTP(email string) error
+}
+
+func NewOTPRepo(client *redis.Client) *Repository{
+	return &Repository{
+		repo: client,
+	}
+}
+
+func (s *Repository)SaveOTP(item OTPItem) error{
+	ctx := context.Background()
+
+	err := s.repo.Set(ctx, item.Email, item, 10*time.Minute).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Repository)GetOTP(email string) (string, error){
+	ctx := context.Background()
+	val, err := g.repo.Get(ctx, email).Result()
+	if err != nil {
+		return "", err
+	}
+	return val, nil
+}
+
+func (d *Repository)DeleteOTP(email string) error{
+	ctx := context.Background()
+	err := d.repo.Del(ctx, email).Err()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 
@@ -45,7 +79,6 @@ func (s *OTPService) SendOTP(email string) error{
 	otpItem := OTPItem{
 		Email: email,
 		Code: GenerateOPT(),
-		ExpiresAt: time.Now().Add(10*time.Minute),
 	}
 	
 	if err := s.repo.SaveOTP(otpItem); err != nil {
@@ -55,17 +88,14 @@ func (s *OTPService) SendOTP(email string) error{
 	return nil
 }
 func (v *OTPService) VerifyOTP(email string, otp string) (bool, error){
-	otpItem, err := v.repo.GetOTP(email)
+	code, err := v.repo.GetOTP(email)
 	//this error code are from reddis
 	if err != nil {
 		return false, err
 	}
 	//otp errrors
-	if !IsOTPExpired(otpItem){
-		return false, expiredOTPErr
-	}
 
-	if otpItem.Code != otp{
+	if code != otp{
 		return false, invalidOTPErr
 	}
 	if err := v.repo.DeleteOTP(email); err !=nil {
@@ -81,14 +111,6 @@ func (v *OTPService) VerifyOTP(email string, otp string) (bool, error){
 func GenerateOPT() string{
 	random_number := rand.IntN(999999) + 10000
 	return strconv.Itoa(random_number)
-}
-
-func IsOTPExpired(otpitem OTPItem) (bool){
-	t1 := time.Now()
-	if t1.After(otpitem.ExpiresAt){
-		return true
-	}
-	return false
 }
 
 // implement endpoint -> emailsender inteface-> send main 
