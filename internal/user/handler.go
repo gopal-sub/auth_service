@@ -2,7 +2,6 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -34,7 +33,6 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 		})
 		return
 	}
-	fmt.Println(SignupReq)
 
 	user, err := h.svc.Signup(SignupReq.Email, SignupReq.Password)
 	if err != nil {

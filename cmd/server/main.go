@@ -6,7 +6,7 @@ import (
 	"gopal-sub/auth_service/internal/database"
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
-	"gopal-sub/auth_service/internal/auth"
+	"gopal-sub/auth_service/internal/auth/otp"
 	"log"
 	"net/http"
 
@@ -44,8 +44,13 @@ func main(){
 	service := user.NewService(newRepo)
 	handler := user.NewHandler(service)
 
-	redisNewRepo := auth.NewOTPRepo(rdb)
-	redisNewService := auth.NewOTPService(redisNewRepo)
+	otpRepo := otp.NewOTPRepo(rdb)
+	otpService := otp.NewOTPService(otpRepo)
+	otpHandler := otp.NewHandler(otpService)
+
+
+	router.HandleFunc("POST /otp/send", otpHandler.SendOTP)
+	router.HandleFunc("POST /otp/verify", otpHandler.VerifyOTP)
 
 
 
