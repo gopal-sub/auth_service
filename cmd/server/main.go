@@ -7,8 +7,10 @@ import (
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
 	"gopal-sub/auth_service/internal/auth/otp"
+	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"log"
 	"net/http"
+	"os"
 
 
 	"github.com/joho/godotenv"
@@ -25,6 +27,8 @@ func main(){
 		log.Fatal("env did not load")
 	}
 
+	//postgres init
+
 	db, err := database.New()
 	
 	
@@ -32,6 +36,8 @@ func main(){
 	if err != nil {
 		log.Fatalf(`database error  wowowo  %v`, err)
 	}
+
+	//redis db init
 	rdb, err := redis.New()
 	if err != nil {
 		log.Fatalf(`redis error  wowowo  %v`, err)
@@ -39,14 +45,33 @@ func main(){
 	defer rdb.Close()
 
 	
-	
+	// userRepo and service init
 	newRepo := user.NewRepository(db)
 	service := user.NewService(newRepo)
 	handler := user.NewHandler(service)
 
+	// otprepo and svc init || SMTP svc and repo init
+
 	otpRepo := otp.NewOTPRepo(rdb)
-	otpService := otp.NewOTPService(otpRepo)
+
+	host := os.Getenv("SMTP_HOST")
+	port := os.Getenv("SMTP_PORT")
+	fromEmail := os.Getenv("SMTP_EMAIL")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+
+	smtpEmailSender := otp.NewSMTPEmailSender(host, port, fromEmail, smtpPassword)
+
+
+	otpService := otp.NewOTPService(otpRepo, smtpEmailSender)
+
+	
+
 	otpHandler := otp.NewHandler(otpService)
+
+	// ratelimiter Repo and svc init
+
+	rateLimiterRepo := rlimiter.NewRepo(rdb)
+	rateLimiterRepo.InsertRequest("gopal")
 
 
 	router.HandleFunc("POST /otp/send", otpHandler.SendOTP)

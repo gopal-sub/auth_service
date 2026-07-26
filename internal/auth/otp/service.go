@@ -1,13 +1,16 @@
 package otp
 
+import "fmt"
+
 type Service struct{
 	repo OTPRepository
-	smtp SMTPEmailSender
+	sender EmailSender
 }
 
-func NewOTPService(repo OTPRepository) *Service{
+func NewOTPService(repo OTPRepository, sender EmailSender) *Service{
 	return &Service{
 		repo: repo,
+		sender: sender,
 	}
 }
 
@@ -24,8 +27,11 @@ func (s *Service) SendOTP(email string) error{
 	if err := s.repo.SaveOTP(otpItem); err != nil {
 		return err
 	}
+	subject := fmt.Sprintf("YOUR OTP TO RESET FOR ACCOUNT %s", email)
+	body := fmt.Sprintf("OTP %s", otpItem.Code)
 
 	//send mail here
+	s.sender.SendEmail(email, subject, body)
 	return nil
 }
 func (v *Service) VerifyOTP(email string, otp string) (bool, error){

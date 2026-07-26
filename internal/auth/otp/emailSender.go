@@ -27,7 +27,7 @@ func NewSMTPEmailSender(host string, port string, username string, password stri
 }
 
 
-func (s *SMTPEmailSender) SendEmail(to, subject, body, from string) error{
+func (s *SMTPEmailSender) SendEmail(to, subject, body string) error{
 	auth := smtp.PlainAuth(
 		"",
 		s.username,
@@ -36,6 +36,7 @@ func (s *SMTPEmailSender) SendEmail(to, subject, body, from string) error{
 	)
 
 	message := fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body)
+
 
 	err := smtp.SendMail(
 		s.host+":"+s.port,
