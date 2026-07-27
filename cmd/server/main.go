@@ -45,10 +45,16 @@ func main(){
 	defer rdb.Close()
 
 	
-	// userRepo and service init
-	newRepo := user.NewRepository(db)
-	service := user.NewService(newRepo)
-	handler := user.NewHandler(service)
+	// userRepo and userservice init
+	userRepo := user.NewRepository(db)
+	userservice := user.NewService(userRepo)
+	userhandler := user.NewHandler(userservice)
+
+
+	// ratelimiter Repo and svc init
+
+	rateLimiterRepo := rlimiter.NewRepo(rdb)
+	rateLimiterSvc := rlimiter.NewService(rateLimiterRepo)
 
 	// otprepo and svc init || SMTP svc and repo init
 
@@ -66,22 +72,19 @@ func main(){
 
 	
 
-	otpHandler := otp.NewHandler(otpService)
+	otpHandler := otp.NewHandler(otpService, rateLimiterSvc, userservice)
 
-	// ratelimiter Repo and svc init
 
-	rateLimiterRepo := rlimiter.NewRepo(rdb)
-	rateLimiterRepo.InsertRequest("gopal")
 
 
 	router.HandleFunc("POST /otp/send", otpHandler.SendOTP)
-	router.HandleFunc("POST /otp/verify", otpHandler.VerifyOTP)
+	router.HandleFunc("POST /otp/verify",otpHandler.VerifyOTP)
 
 
 
 
-	router.HandleFunc("POST /user", handler.SignUpHandler)
-	router.HandleFunc("POST /gettoken", handler.SigninHandler)
+	router.HandleFunc("POST /user", userhandler.SignUpHandler)
+	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
 
 	userServer := http.Server{
 		Addr:    ":3000",

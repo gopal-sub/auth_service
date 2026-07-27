@@ -2,7 +2,6 @@ package ratelimiter
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,23 +26,22 @@ func NewRepo(rdb *redis.Client) *Repository{
 
 func (i *Repository) InsertRequest(email string, totalRequestsSent int) error{
 	cxt := context.Background()
+	key := RedisKeyPrefix + email
+	duration, _ := i.repo.TTL(cxt, key).Result()
+	if duration == -2 *time.Nanosecond || duration == -1 *time.Nanosecond{
+		err := i.repo.Set(cxt, key, totalRequestsSent, TTL).Err()
+		return err
+	}
 
-	err = i.repo.Set(cxt, email, totalRequestsSent, time.Duration(totalRequestsSent)).Err()
-	
-
-	
-	
-		
-		
-
-
-	return otpAttemptsExeErr
+	err := i.repo.Set(cxt, key, totalRequestsSent, duration).Err()
+	return err
 }
 
 
 func (i *Repository) GetRequest(email string) (string, error){
 	cxt := context.Background()
-	val, err := i.repo.Get(cxt, email).Result()
+	key := RedisKeyPrefix + email
+	val, err := i.repo.Get(cxt, key).Result()
 	if err == redis.Nil{
 		return "", err
 	}
@@ -54,5 +52,3 @@ func (i *Repository) GetRequest(email string) (string, error){
 	return val, nil
 }
 
-
-// email -> {numberOfReq = }

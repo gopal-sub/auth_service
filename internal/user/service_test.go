@@ -63,11 +63,11 @@ func TestSignin(t *testing.T){
 			name: "DBConnectionErr",
 
 			fakerepo: &FakeRepository{
-				findErr: dberr,
+				findErr: Dberr,
 			},
 			email: "test@example.com",
 			password: "hi there",
-			expectedErr: dberr,
+			expectedErr: Dberr,
 			expectToken: false,
 		},
 		{
@@ -142,7 +142,7 @@ func TestSigninUserNotFound(t *testing.T) {
 func TestDBConnectionErr(t *testing.T){
 	// arrange
 	fakeRepo := &FakeRepository{
-		findErr: dberr,
+		findErr: Dberr,
 	}
 	service := NewService(fakeRepo)
 	
@@ -151,7 +151,7 @@ func TestDBConnectionErr(t *testing.T){
 	token, err := service.Signin("testuser@gmail.com", "hi there")
 
 	// assert
-	if !errors.Is(err, dberr){
+	if !errors.Is(err, Dberr){
 		t.Fatal("expected database conenction error")
 	}
 	if token != ""{
@@ -240,7 +240,7 @@ func Test_SignupSuccesss(t *testing.T){
 func Test_DatabaseErrFindUser(t *testing.T){
 	// arrange
 	repo := &FakeRepository{
-		findErr: dberr,
+		findErr: Dberr,
 		createErr: nil,
 	}
 	service := NewService(repo)
@@ -250,15 +250,15 @@ func Test_DatabaseErrFindUser(t *testing.T){
 
 	_, err := service.Signup("testuser@gmail.com", "hi there")
 	// assert
-	if !errors.Is(err, dberr){
-		t.Fatalf("expected error dberr got : %v", err)
+	if !errors.Is(err, Dberr){
+		t.Fatalf("expected error Dberr got : %v", err)
 	}
 }
 func Test_DatabaseErrInsertUser(t *testing.T){
 	// arrange
 	repo := &FakeRepository{
 		findErr: nil,
-		createErr: dberr,
+		createErr: Dberr,
 	}
 	service := NewService(repo)
 	// act
@@ -266,8 +266,8 @@ func Test_DatabaseErrInsertUser(t *testing.T){
 	_, err := service.Signup("test@gmail.com", "hi there")
 
 	// assert
-	if errors.Is(err, dberr){
-		t.Fatalf("exprected dberr error: %v", err)
+	if errors.Is(err, Dberr){
+		t.Fatalf("exprected Dberr error: %v", err)
 	}
 }
 func Test_UserExistsConflict(t *testing.T){
@@ -275,7 +275,7 @@ func Test_UserExistsConflict(t *testing.T){
 	userEmail := "userexists@gmail.com"
 	repo := &FakeRepository{
 		user: User{Email: userEmail},
-		findErr: userExistsConflict,
+		findErr: UserExistsConflict,
 		createErr: nil,
 	}
 	service := NewService(repo)
@@ -285,7 +285,7 @@ func Test_UserExistsConflict(t *testing.T){
 
 	// assert
 
-	if !errors.Is(err, userExistsConflict){
-		t.Fatalf("expected error userExistsConflict %v", err)
+	if !errors.Is(err, UserExistsConflict){
+		t.Fatalf("expected error UserExistsConflict %v", err)
 	}
 }

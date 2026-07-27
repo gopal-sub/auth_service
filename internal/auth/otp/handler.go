@@ -2,17 +2,24 @@ package otp
 
 import (
 	"encoding/json"
+	"errors"
+	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
+	"gopal-sub/auth_service/internal/user"
 	"net/http"
 )
 
 type Handler struct {
 	svc *Service
+	rlimiter *rlimiter.Service
+	userSvc *user.Service
 }
 
 
-func NewHandler (svc *Service) *Handler{
+func NewHandler (svc *Service, rlimiter *rlimiter.Service, userSvc *user.Service) *Handler{
 	return &Handler{
 		svc: svc,
+		rlimiter: rlimiter,
+		userSvc: userSvc,
 	}
 }
 
@@ -25,7 +32,37 @@ func (s *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	decoder.Decode(&SendOTP)
 
-	err := s.svc.SendOTP(SendOTP.Email)
+	if !s.userSvc.UserExists(SendOTP.Email){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "user does not exist",
+		})
+		return
+	}
+
+	//rate limiter kickes in
+	err := s.rlimiter.RateLimit(SendOTP.Email)
+	if errors.Is(err, rlimiter.OTPAttemptsExeErr){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "too many attenpts try after sometime",
+		})
+		return
+	}
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "server down",
+		})
+		return
+	}
+
+
+
+	err = s.svc.SendOTP(SendOTP.Email)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)

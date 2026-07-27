@@ -25,7 +25,8 @@ func NewOTPRepo(client *redis.Client) *Repository{
 
 func (s *Repository)SaveOTP(item OTPItem) error{
 	ctx := context.Background()
-	err := s.repo.Set(ctx, item.Email, item.Code, 10*time.Minute).Err()
+	key := RedisKeyPrefix + item.Email
+	err := s.repo.Set(ctx, key, item.Code, 10*time.Minute).Err()
 	//email => otp
 	// key val pair
 
@@ -37,7 +38,8 @@ func (s *Repository)SaveOTP(item OTPItem) error{
 
 func (g *Repository)GetOTP(email string) (string, error){
 	ctx := context.Background()
-	val, err := g.repo.Get(ctx, email).Result()
+	key := RedisKeyPrefix + email
+	val, err := g.repo.Get(ctx, key).Result()
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +48,8 @@ func (g *Repository)GetOTP(email string) (string, error){
 
 func (d *Repository)DeleteOTP(email string) error{
 	ctx := context.Background()
-	err := d.repo.Del(ctx, email).Err()
+	key := RedisKeyPrefix + email
+	err := d.repo.Del(ctx, key).Err()
 	if err != nil {
 		return err
 	}

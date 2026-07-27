@@ -35,7 +35,7 @@ func (s *Service) Signup(email string, password string) (User, error){
 		return newUser, nil
 	}
 	if err == nil{
-		return User{}, userExistsConflict
+		return User{}, UserExistsConflict
 	}
 
 	return User{}, err
@@ -77,5 +77,13 @@ func (s *Service) Signin(email string, password string) (token string, err error
 	//make jwt imp
 	return tokenString, nil
 	
+}
+
+func (s *Service) UserExists(email string) bool {
+	_, err := s.repo.FindUserByEmail(email)
+	if errors.Is(err, sql.ErrNoRows){
+		return false
+	}
+	return true
 }
 

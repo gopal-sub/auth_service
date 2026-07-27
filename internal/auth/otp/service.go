@@ -1,10 +1,14 @@
 package otp
 
-import "fmt"
+import (
+	"fmt"
+
+)
 
 type Service struct{
 	repo OTPRepository
 	sender EmailSender
+	
 }
 
 func NewOTPService(repo OTPRepository, sender EmailSender) *Service{
@@ -18,6 +22,8 @@ func NewOTPService(repo OTPRepository, sender EmailSender) *Service{
 
 
 func (s *Service) SendOTP(email string) error{
+
+
 
 	otpItem := OTPItem{
 		Email: email,
