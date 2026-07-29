@@ -87,3 +87,29 @@ func (s *Service) UserExists(email string) bool {
 	return true
 }
 
+func (s *Service) IsUserAccountVerified(email string) (bool, error) {
+	user, err := s.repo.FindUserByEmail(email)
+	if errors.Is(err, sql.ErrNoRows){
+		return false, UserDoesNotExistErr
+	}
+	if(user.IsVerified){
+		return true, nil
+	}
+	return false, nil
+}
+
+func (s *Service) VerifyAnAccount(email string)(accountVerified bool, err error){
+	accountVer, err := s.repo.VerifyAccount(email)
+	if errors.Is(err, UserDoesNotExistErr){
+		return false, UserDoesNotExistErr
+	}
+	if err != nil {
+		return false, err
+	}
+	if(accountVer == true){
+		return true, nil
+	}
+	return false, nil
+}
+	
+

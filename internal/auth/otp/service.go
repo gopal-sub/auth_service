@@ -8,7 +8,7 @@ import (
 type Service struct{
 	repo OTPRepository
 	sender EmailSender
-	
+
 }
 
 func NewOTPService(repo OTPRepository, sender EmailSender) *Service{
@@ -43,16 +43,15 @@ func (s *Service) SendOTP(email string) error{
 func (v *Service) VerifyOTP(email string, otp string) (bool, error){
 	code, err := v.repo.GetOTP(email)
 	//this error code are from reddis
+	if code != otp{
+		return false, invalidOTPErr
+	}
 	if err != nil {
 		return false, err
 	}
 	//otp errrors
-
-	if code != otp{
-		return false, invalidOTPErr
-	}
 	if err := v.repo.DeleteOTP(email); err !=nil {
-		return false, nil
+		return false, err
 	}
 	return true, nil
 

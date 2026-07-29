@@ -14,6 +14,7 @@ type Repository struct{
 type UserRepository interface{
 	FindUserByEmail(email string) (User, error)
 	Create(User) error
+	VerifyAccount(email string) (bool, error)
 }
 
 func NewRepository(db *sql.DB) *Repository{
@@ -36,6 +37,7 @@ func (r *Repository) Create(user User) error{
 		user.Email,
 		user.PasswordHash,
 		user.CreatedAt,
+		user.IsVerified,
 	)
 	return err
 
@@ -48,7 +50,8 @@ func (r *Repository) FindUserByEmail(email string)(User, error) {
 		id,
 		email,
 		password_hash,
-		created_at
+		created_at,
+		IsVerified
 	FROM users
 	WHERE email = $1;
 	`
@@ -60,6 +63,7 @@ func (r *Repository) FindUserByEmail(email string)(User, error) {
 		&user.Email,
 		&user.PasswordHash,
 		&user.CreatedAt,
+		&user.IsVerified,
 
 	)
 	if errors.Is(err, sql.ErrNoRows){
@@ -74,5 +78,22 @@ func (r *Repository) FindUserByEmail(email string)(User, error) {
 }
 
 
+func (r *Repository) VerifyAccount(email string) (accountVerified bool, err error){
+	query := `
+	UPDATE users
+	SET	IsVerified = TRUE
+	WHERE email = $1;
+	`
+	result, err := r.db.Exec(query, email)
+	if err != nil{
+		return false, err
+	}
+	rowsAfffected, err := result.RowsAffected()
+	if rowsAfffected == 0 {
+		return false, UserDoesNotExistErr
+	}
+	return true, nil
+
+}
 
 

@@ -77,8 +77,9 @@ func main(){
 
 
 
-	router.HandleFunc("POST /otp/send", otpHandler.SendOTP)
-	router.HandleFunc("POST /otp/verify",otpHandler.VerifyOTP)
+	router.HandleFunc("POST /pass-reset/otp/send", otpHandler.PasswordResetSendOTP)
+	router.HandleFunc("POST /account-verify/otp/send", otpHandler.AccountVerifySendOTP)
+	router.HandleFunc("POST /account-verify/otp/verify",otpHandler.AccountVerifyVerifyOTP)
 
 
 

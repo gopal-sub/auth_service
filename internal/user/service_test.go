@@ -23,6 +23,10 @@ func (f *FakeRepository) Create(user User) error {
 	return  f.createErr
 }
 
+func (f *FakeRepository) VerifyAccount(email string) (bool, error) {
+	return  false, nil
+}
+
 //signin tests -> table
 
 type signinTestCases struct{
