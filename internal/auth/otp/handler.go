@@ -3,6 +3,7 @@ package otp
 import (
 	"encoding/json"
 	"errors"
+	"gopal-sub/auth_service/internal/httputils"
 	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"gopal-sub/auth_service/internal/user"
 	"net/http"
@@ -28,9 +29,11 @@ func NewHandler (svc *Service, rlimiter *rlimiter.Service, userSvc *user.Service
 func (h *Handler) PasswordResetSendOTP(w http.ResponseWriter, r *http.Request) {
 	var SendOTP SendOTP
 
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&SendOTP)
+
+	err := httputils.DecodeJSONMiddleware(w, r, &SendOTP)
+	if err != nil {
+		return
+	}
 
 	if !h.userSvc.UserExists(SendOTP.Email){
 		w.Header().Set("Content-Type", "application/json")
@@ -42,7 +45,7 @@ func (h *Handler) PasswordResetSendOTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//rate limiter kickes in
-	err := h.rlimiter.RateLimit(SendOTP.Email)
+	err = h.rlimiter.RateLimit(SendOTP.Email)
 	if errors.Is(err, rlimiter.OTPAttemptsExeErr){
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusTooManyRequests)
@@ -83,9 +86,10 @@ func (h *Handler) PasswordResetSendOTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var VerifyOTP VerifyOTP
 
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&VerifyOTP)
+	err := httputils.DecodeJSONMiddleware(w, r, &VerifyOTP)
+	if err != nil {
+		return
+	}
 	
 
 	valid, err := h.svc.VerifyOTP(VerifyOTP.Email, VerifyOTP.Code)
@@ -123,15 +127,9 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AccountVerifySendOTP(w http.ResponseWriter, r *http.Request){
 	var otpItem SendOTP
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&otpItem)
-	if err != nil{
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "bad data from client",
-		})
+
+	err := httputils.DecodeJSONMiddleware(w, r, &otpItem)
+	if err != nil {
 		return
 	}
 	
@@ -192,9 +190,10 @@ func (h *Handler) AccountVerifySendOTP(w http.ResponseWriter, r *http.Request){
 func (h *Handler) AccountVerifyVerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var VerifyOTP VerifyOTP
 
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&VerifyOTP)
+	err := httputils.DecodeJSONMiddleware(w, r, &VerifyOTP)
+	if err != nil {
+		return
+	}
 
 	valid, err := h.svc.VerifyOTP(VerifyOTP.Email, VerifyOTP.Code)
 
