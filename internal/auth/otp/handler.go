@@ -30,7 +30,7 @@ func (h *Handler) PasswordResetSendOTP(w http.ResponseWriter, r *http.Request) {
 	var SendOTP SendOTP
 
 
-	err := httputils.DecodeJSONMiddleware(w, r, &SendOTP)
+	err := httputils.DecodeAndWriteError(w, r, &SendOTP)
 	if err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func (h *Handler) PasswordResetSendOTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var VerifyOTP VerifyOTP
 
-	err := httputils.DecodeJSONMiddleware(w, r, &VerifyOTP)
+	err := httputils.DecodeAndWriteError(w, r, &VerifyOTP)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AccountVerifySendOTP(w http.ResponseWriter, r *http.Request){
 	var otpItem SendOTP
 
-	err := httputils.DecodeJSONMiddleware(w, r, &otpItem)
+	err := httputils.DecodeAndWriteError(w, r, &otpItem)
 	if err != nil {
 		return
 	}
@@ -190,7 +190,7 @@ func (h *Handler) AccountVerifySendOTP(w http.ResponseWriter, r *http.Request){
 func (h *Handler) AccountVerifyVerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var VerifyOTP VerifyOTP
 
-	err := httputils.DecodeJSONMiddleware(w, r, &VerifyOTP)
+	err := httputils.DecodeAndWriteError(w, r, &VerifyOTP)
 	if err != nil {
 		return
 	}

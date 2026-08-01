@@ -75,8 +75,6 @@ func main(){
 	otpHandler := otp.NewHandler(otpService, rateLimiterSvc, userservice)
 
 
-
-
 	router.HandleFunc("POST /pass-reset/otp/send", otpHandler.PasswordResetSendOTP)
 	router.HandleFunc("POST /account-verify/otp/send", otpHandler.AccountVerifySendOTP)
 	router.HandleFunc("POST /account-verify/otp/verify",otpHandler.AccountVerifyVerifyOTP)

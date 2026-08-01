@@ -2,6 +2,10 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"gopal-sub/auth_service/internal/httputils"
+	"gopal-sub/auth_service/internal/validator"
 	"net/http"
 )
 
@@ -21,21 +25,33 @@ func NewHandler(svc *Service) *Handler{
 func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 	var SignupReq SignUpRequest
 
-	decoder := json.NewDecoder(r.Body)
-	//reject req if there are junk fields
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&SignupReq)
+	err := httputils.DecodeAndWriteError(w, r, &SignupReq)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "invalid request body",
-		})
 		return
 	}
 
+	err = validator.Email(SignupReq.Email)
+	if errors.Is(err, validator.EmailRequiredErr){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": `no email was provided`,
+		})
+    	return
+	}
+	if errors.Is(err, validator.InvalidEmailErr){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": `email provided was invalid`,
+		})
+    	return
+	}
+
+
 	user, err := h.svc.Signup(SignupReq.Email, SignupReq.Password)
-	if err != nil {
+	fmt.Println(err)
+	if errors.Is(err, UserExistsConflict){
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -44,6 +60,15 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 		})
     	return
 	}
+	if err != nil{
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": `There was a server error`,
+		})
+    	return
+	}
+
 
 	var userResponse SignUpResponse
 
