@@ -3,7 +3,6 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"gopal-sub/auth_service/internal/auth"
 )
 
@@ -19,7 +18,6 @@ func NewService(repo UserRepository) *Service{
 
 func (s *Service) Signup(email string, password string) (User, error){
 	_, err := s.repo.FindUserByEmail(email)
-	fmt.Println(err)
 
 	if errors.Is(err, sql.ErrNoRows){
 		hashedPassword, err := CreateHash(password)
@@ -29,8 +27,6 @@ func (s *Service) Signup(email string, password string) (User, error){
 
 		newUser := NewUser(email, hashedPassword)
 		err = s.repo.Create(newUser)
-		fmt.Println("hi there knrdaslemndlas")
-		fmt.Println(err)
 		if err != nil {
 			return User{}, err
 		}

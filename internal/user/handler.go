@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"gopal-sub/auth_service/internal/httputils"
 	"gopal-sub/auth_service/internal/validator"
 	"net/http"
@@ -50,7 +49,6 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 
 
 	user, err := h.svc.Signup(SignupReq.Email, SignupReq.Password)
-	fmt.Println(err)
 	if errors.Is(err, UserExistsConflict){
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)

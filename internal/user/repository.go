@@ -28,9 +28,10 @@ func (r *Repository) Create(user User) error{
 
 
 	query := `
-		INSERT INTO users (id, email, password_hash, created_at)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users (id, email, password_hash, created_at, is_verified)
+		VALUES ($1, $2, $3, $4, $5)
 	`
+
 	_, err := r.db.Exec(
 		query,
 		user.ID,
@@ -51,7 +52,7 @@ func (r *Repository) FindUserByEmail(email string)(User, error) {
 		email,
 		password_hash,
 		created_at,
-		IsVerified
+		is_verified
 	FROM users
 	WHERE email = $1;
 	`
@@ -81,7 +82,7 @@ func (r *Repository) FindUserByEmail(email string)(User, error) {
 func (r *Repository) VerifyAccount(email string) (accountVerified bool, err error){
 	query := `
 	UPDATE users
-	SET	IsVerified = TRUE
+	SET	is_verified = TRUE
 	WHERE email = $1;
 	`
 	result, err := r.db.Exec(query, email)
