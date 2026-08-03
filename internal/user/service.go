@@ -6,6 +6,18 @@ import (
 	"gopal-sub/auth_service/internal/auth"
 )
 
+type UserService interface {
+	Signup(email string, password string) (User, error)
+	Signin(email string, password string) (token string, err error)
+	UserExists(email string) bool
+	IsUserAccountVerified(email string) (bool, error)
+	VerifyAnAccount(email string)(accountVerified bool, err error)
+	PasswordReset(email string, OldPassword string) error
+
+
+}
+
+
 type Service struct{
 	repo UserRepository
 }
