@@ -27,6 +27,10 @@ func (f *FakeRepository) VerifyAccount(email string) (bool, error) {
 	return  false, nil
 }
 
+func (f *FakeRepository) ResetPassword(email string, passwordHash string) error{
+	return nil
+}
+
 //signin tests -> table
 
 type signinTestCases struct{

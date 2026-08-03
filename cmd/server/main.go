@@ -84,6 +84,7 @@ func main(){
 
 	router.HandleFunc("POST /user", userhandler.SignUpHandler)
 	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
+	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
 
 	userServer := http.Server{
 		Addr:    ":3000",

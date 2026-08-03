@@ -69,9 +69,6 @@ func (s *Service) Signin(email string, password string) (token string, err error
 	}
 
 
-
-
-
 	//make jwt imp
 	return tokenString, nil
 	
@@ -108,6 +105,15 @@ func (s *Service) VerifyAnAccount(email string)(accountVerified bool, err error)
 		return true, nil
 	}
 	return false, nil
+}
+
+func (s *Service) PasswordReset(email string, OldPassword string) error {
+	hashedPassword, err := CreateHash(OldPassword)
+	if err != nil{
+		return  err
+	}
+	err = s.repo.ResetPassword(email, hashedPassword)
+	return err
 }
 	
 

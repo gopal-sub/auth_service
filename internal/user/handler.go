@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"gopal-sub/auth_service/internal/httputils"
 	"gopal-sub/auth_service/internal/validator"
 	"net/http"
@@ -112,4 +113,55 @@ func (h *Handler) SigninHandler(w http.ResponseWriter, r *http.Request){
 	
 	json.NewEncoder(w).Encode(signinResponse)
 
+}
+
+func (h *Handler) PasswordReset(w http.ResponseWriter, r *http.Request) {
+	var userPasswordUpdate UpdateUserRequest
+	decorder := json.NewDecoder(r.Body)
+	decorder.DisallowUnknownFields()
+	err := decorder.Decode(&userPasswordUpdate)
+	if err != nil{
+		return
+	}
+	if userPasswordUpdate.OldPassword == userPasswordUpdate.NewPassword{
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Bad request",
+		})
+		return
+	}
+
+	_, err = h.svc.Signin(userPasswordUpdate.Email, userPasswordUpdate.OldPassword)
+	if errors.Is(err, ErrInvalidCredentials){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid password",
+		})
+		return
+	}
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "server error",
+		})
+		return
+	}
+	err = h.svc.PasswordReset(userPasswordUpdate.Email, userPasswordUpdate.NewPassword)
+	fmt.Println(err)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "password reset failed",
+		})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"success": "password reset success",
+	})
 }

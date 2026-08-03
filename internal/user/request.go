@@ -23,6 +23,11 @@ type SigninResponse struct {
 	Token string
 }
 
+type UpdateUserRequest struct {
+    OldPassword string
+    NewPassword string
+    Email string
+}
 
 
 

@@ -15,6 +15,7 @@ type UserRepository interface{
 	FindUserByEmail(email string) (User, error)
 	Create(User) error
 	VerifyAccount(email string) (bool, error)
+	ResetPassword(email string, passwordHash string) error
 }
 
 func NewRepository(db *sql.DB) *Repository{
@@ -95,6 +96,17 @@ func (r *Repository) VerifyAccount(email string) (accountVerified bool, err erro
 	}
 	return true, nil
 
+}
+
+
+func (r *Repository) ResetPassword(email string, passwordHash string) error{
+	query := `
+	UPDATE users
+	SET	password_hash = $2
+	WHERE email = $1;
+	`
+	_, err := r.db.Exec(query, email, passwordHash)
+	return err
 }
 
 
