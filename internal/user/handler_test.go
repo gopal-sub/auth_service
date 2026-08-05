@@ -35,6 +35,14 @@ func (f *FakeUserService) PasswordReset(email string, OldPassword string) error{
 
 //test Signup handler
 
+type SignupCases struct {
+	email string
+	password string
+	method string
+	responseStatus int
+	responseMessage string
+
+}
 
 func TestSignUpHandler(t *testing.T){
 	// arrange 
