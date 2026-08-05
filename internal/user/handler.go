@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"gopal-sub/auth_service/internal/httputils"
 	"gopal-sub/auth_service/internal/validator"
 	"net/http"
@@ -30,6 +29,15 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 	err := httputils.DecodeAndWriteError(w, r, &SignupReq)
 	if err != nil {
 		return
+	}
+
+	if SignupReq.Password == ""{
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": `no password was provided`,
+		})
+    	return
 	}
 
 	err = validator.Email(SignupReq.Email)
@@ -152,7 +160,6 @@ func (h *Handler) PasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.svc.PasswordReset(userPasswordUpdate.Email, userPasswordUpdate.NewPassword)
-	fmt.Println(err)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)

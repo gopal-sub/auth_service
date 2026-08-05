@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -36,9 +37,9 @@ func (f *FakeUserService) PasswordReset(email string, OldPassword string) error{
 //test Signup handler
 
 type SignupCases struct {
+	name string
 	email string
 	password string
-	method string
 	responseStatus int
 	responseMessage string
 
@@ -49,30 +50,71 @@ func TestSignUpHandler(t *testing.T){
 	fakeSvc := &FakeUserService{}
 	fakehandler := NewHandler(fakeSvc)
 
+	testCases := []SignupCases{
+		{
+			name: "Success creating user",
+			email:"testuser@example.com",
+			password: "test1243",
+			responseStatus: 201,
+			responseMessage: "user created",
+	
+		},
+		{
+			name: "failure email invalid",
+			email:"testuser",
+			password: "test1243",
+			responseStatus: 400,
+			responseMessage: "invalid email",
+	
+		},
+		{
+			name: "Bad body",
+			email:"testuser@exa",
+			password: "",
+			responseStatus: 400,
+			responseMessage: "invalid email",
+	
+		},
+		{
+			name: "Bad body",
+			email:"",
+			password: "nlsnfls",
+			responseStatus: 400,
+			responseMessage: "invalid email",
+	
+		},
 
-	// A Reader implements the [io.Reader]
-	body := strings.NewReader(`{
-		"email": "test@gmail.com",
-		"password": "hi there"
-	}`)
-
-	req := httptest.NewRequest(
-		http.MethodPost,
-		"/signup",
-		body,
-	)
-
-	rec := httptest.NewRecorder()
-
-	// act 
-
-	fakehandler.SignUpHandler(rec, req)
-
-	// assert
-
-	if rec.Code != http.StatusCreated {
-		t.Fatalf("expected %d got %d", http.StatusCreated, rec.Code)
 	}
 
+	for _, tt := range testCases{
+		t.Run(tt.name, func(t *testing.T){
+			// A Reader implements the [io.Reader]
 
+			bodyStr := fmt.Sprintf(`{
+				"email": "%s",
+				"password": "%s"
+			}`, tt.email, tt.password)
+
+			body := strings.NewReader(bodyStr)
+			
+			
+			req := httptest.NewRequest(
+				http.MethodPost,
+				"/signup",
+				body,
+			)
+			
+			rec := httptest.NewRecorder()
+			
+			// act 
+			
+			fakehandler.SignUpHandler(rec, req)
+			
+			// assert
+			if rec.Code != tt.responseStatus {
+				t.Fatalf("expected %d got %d", tt.responseStatus, rec.Code)
+			} 
+
+		})
+	}
 }

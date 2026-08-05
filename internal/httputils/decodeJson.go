@@ -3,7 +3,6 @@ package httputils
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -14,7 +13,7 @@ func DecodeJSONReq(r *http.Request, dts any) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(dts)
-	
+
 
 	if errors.Is(err, SyntaxError) {
 		return JsonSyntaxError
@@ -47,7 +46,6 @@ func DecodeAndWriteError(w http.ResponseWriter, r *http.Request, dts any) error{
 		})
 		return err
 	}
-	fmt.Println(err)
 	if err != nil{
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
