@@ -174,3 +174,10 @@ func (h *Handler) PasswordReset(w http.ResponseWriter, r *http.Request) {
 		"success": "password reset success",
 	})
 }
+
+func (h *Handler) Profile(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"User": "welcome to profile",
+	})
+}

@@ -7,6 +7,7 @@ import (
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
 	"gopal-sub/auth_service/internal/auth/otp"
+	"gopal-sub/auth_service/internal/auth"
 	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"log"
 	"net/http"
@@ -85,6 +86,8 @@ func main(){
 	router.HandleFunc("POST /user", userhandler.SignUpHandler)
 	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
+
+	router.Handle("POST /profile", auth.Middleware(http.HandlerFunc(userhandler.Profile)))
 
 	userServer := http.Server{
 		Addr:    ":3000",
