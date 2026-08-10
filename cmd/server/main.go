@@ -86,6 +86,8 @@ func main(){
 	router.HandleFunc("POST /user", userhandler.SignUpHandler)
 	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
+	router.HandleFunc("GET /oauth", userhandler.OauthLogin)
+	router.HandleFunc("GET /callback", userhandler.OauthCallback)
 
 	router.Handle("POST /profile", auth.Middleware(http.HandlerFunc(userhandler.Profile)))
 
