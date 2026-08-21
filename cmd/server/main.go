@@ -1,18 +1,18 @@
 package main
 
 import (
-
 	"fmt"
+	"gopal-sub/auth_service/internal/auth"
+	"gopal-sub/auth_service/internal/auth/oauth"
+	"gopal-sub/auth_service/internal/auth/oauth/google"
+	"gopal-sub/auth_service/internal/auth/otp"
 	"gopal-sub/auth_service/internal/database"
+	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
-	"gopal-sub/auth_service/internal/auth/otp"
-	"gopal-sub/auth_service/internal/auth"
-	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"log"
 	"net/http"
 	"os"
-
 
 	"github.com/joho/godotenv"
 )
@@ -51,6 +51,12 @@ func main(){
 	userservice := user.NewService(userRepo)
 	userhandler := user.NewHandler(userservice)
 
+	//oauth init
+	var googleProvider oauth.OauthProvider = "google"
+	googelProvider := google.NewGoogleProvider()
+	oauthsvc := oauth.NewService(googelProvider, userservice)
+	url := oauthsvc.GetAuthLoginURL(googleProvider)
+	fmt.Println(url)
 
 	// ratelimiter Repo and svc init
 
@@ -86,8 +92,9 @@ func main(){
 	router.HandleFunc("POST /user", userhandler.SignUpHandler)
 	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
-	router.HandleFunc("GET /oauth", userhandler.OauthLogin)
-	router.HandleFunc("GET /callback", userhandler.OauthCallback)
+
+	// router.HandleFunc("GET /oauth", userhandler.OauthLogin)
+	// router.HandleFunc("GET /callback", userhandler.OauthCallback)
 
 	router.Handle("POST /profile", auth.Middleware(http.HandlerFunc(userhandler.Profile)))
 
