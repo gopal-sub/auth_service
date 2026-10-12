@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"gopal-sub/auth_service/internal/auth"
-	"gopal-sub/auth_service/internal/auth/oauth"
-	"gopal-sub/auth_service/internal/auth/oauth/google"
 	"gopal-sub/auth_service/internal/auth/otp"
 	"gopal-sub/auth_service/internal/database"
 	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
@@ -52,11 +50,6 @@ func main(){
 	userhandler := user.NewHandler(userservice)
 
 	//oauth init
-	var googleProvider oauth.OauthProvider = "google"
-	googelProvider := google.NewGoogleProvider()
-	oauthsvc := oauth.NewService(googelProvider, userservice)
-	url := oauthsvc.GetAuthLoginURL(googleProvider)
-	fmt.Println(url)
 
 	// ratelimiter Repo and svc init
 
@@ -94,7 +87,7 @@ func main(){
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
 
 	// router.HandleFunc("GET /oauth", userhandler.OauthLogin)
-	// router.HandleFunc("GET /callback", userhandler.OauthCallback)
+	router.HandleFunc("GET /callback", )
 
 	router.Handle("POST /profile", auth.Middleware(http.HandlerFunc(userhandler.Profile)))
 

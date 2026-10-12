@@ -1,39 +1,24 @@
 package google
 
 import (
-	"net/url"
 	"os"
+	"gopal-sub/auth_service/internal/auth/oauth"
 )
 
-type GoogleProvider struct {
-	
-	cliendID string
-	cliendSecret string
-	redirectURI string
-	scope string
-}
 
 
-func NewGoogleProvider() *GoogleProvider{
-	return &GoogleProvider{
-		cliendID: os.Getenv("GOOGLE_CLIENT_ID"),
-		cliendSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		redirectURI: "http://localhost:3000/callback",
-		scope: "openid",
+func NewGoogleProvider() *oauth.Provider{
+	return &oauth.Provider{
+		CliendID: os.Getenv("GOOGLE_CLIENT_ID"),
+		CliendSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		RedirectURI: "http://localhost:3000/google/callback",
+		Scope: "openid",
+		AuthorisationEndPointBase: "https://accounts.google.com/o/oauth2/v2/auth?",
+		TokenEndpoint: "https://oauth2.googleapis.com/token",
 	}
 }
 
-func (g *GoogleProvider) GetAuthURL() string {
-	params := url.Values{}
-	params.Add("client_id", g.cliendID)
-	params.Add("redirect_uri", g.redirectURI)
-	params.Add("scope", g.scope)
-	params.Add("response_type", "code")
-	authorisationEndPoint := "https://accounts.google.com/o/oauth2/v2/auth?" + params.Encode()
-	return  authorisationEndPoint
 
-	
-}
 
 // func (g *GoogleProvider) HandleCallback (code string) (string, error) {
 // 	queryParams := .URL.Query()

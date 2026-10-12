@@ -5,6 +5,8 @@ import (
 	"errors"
 	"gopal-sub/auth_service/internal/httputils"
 	"gopal-sub/auth_service/internal/validator"
+	"gopal-sub/auth_service/internal/auth/oauth/google"
+	"gopal-sub/auth_service/internal/auth/oauth"
 	"net/http"
 	// "net/url"
 	// "os"
@@ -29,6 +31,14 @@ func NewHandler(svc UserService) *Handler{
 
 func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 	var SignupReq SignUpRequest
+
+	queryValues := r.URL.Query()
+
+	if queryValues["oauthKind"][0]== "google"{
+		googleProvider := google.NewGoogleProvider()
+		handler := oauth.NewHandler(*googleProvider)
+		handler.OauthLogin(w, r)
+	}
 
 	err := httputils.DecodeAndWriteError(w, r, &SignupReq)
 	if err != nil {
