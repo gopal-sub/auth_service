@@ -30,7 +30,6 @@ func main(){
 
 	db, err := database.New()
 	
-	
 
 	if err != nil {
 		log.Fatalf(`database error  wowowo  %v`, err)
@@ -42,6 +41,8 @@ func main(){
 		log.Fatalf(`redis error  wowowo  %v`, err)
 	}
 	defer rdb.Close()
+	redisRepo := redis.NewRepository(rdb)
+	
 
 	
 	// userRepo and userservice init
@@ -53,8 +54,9 @@ func main(){
 
 	// ratelimiter Repo and svc init
 
-	rateLimiterRepo := rlimiter.NewRepo(rdb)
+	rateLimiterRepo := rlimiter.NewRepo(redisRepo)
 	rateLimiterSvc := rlimiter.NewService(rateLimiterRepo)
+	
 
 	// otprepo and svc init || SMTP svc and repo init
 
@@ -79,7 +81,7 @@ func main(){
 	router.HandleFunc("POST /account-verify/otp/send", otpHandler.AccountVerifySendOTP)
 	router.HandleFunc("POST /account-verify/otp/verify",otpHandler.AccountVerifyVerifyOTP)
 
-
+	
 
 
 	router.HandleFunc("POST /user", userhandler.SignUpHandler)
@@ -87,7 +89,7 @@ func main(){
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
 
 	// router.HandleFunc("GET /oauth", userhandler.OauthLogin)
-	router.HandleFunc("GET /callback", )
+	// router.HandleFunc("GET /callback", )
 
 	router.Handle("POST /profile", auth.Middleware(http.HandlerFunc(userhandler.Profile)))
 
@@ -95,9 +97,12 @@ func main(){
 		Addr:    ":3000",
 		Handler: router,
 	}
+	fmt.Println("connected")
+
+	//this is blocking
 	userServer.ListenAndServe()
 
+
 	
-	fmt.Println("connected")
 	defer db.Close()
 }

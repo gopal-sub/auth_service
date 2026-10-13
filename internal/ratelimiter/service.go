@@ -21,20 +21,20 @@ func (r *Service) RateLimit(email string) error{
 	if err == redis.Nil {
 		//insert to redis
 		// its a fresh insert
-		err = r.repo.InsertRequest(email, 1)
+		err = r.repo.InsertRequest(email, "1")
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	if err != nil {
-		//something wrogn with redis
+		//something wrong with redis
 		return err
 	}
 	totalRequestsSent, _ := strconv.Atoi(val)
 	if totalRequestsSent < MaxReqPerTTL {
 		totalRequestsSent += 1
-		err = r.repo.InsertRequest(email, totalRequestsSent)
+		err = r.repo.InsertRequest(email, string(totalRequestsSent))
 		if err != nil {
 			return err
 		}

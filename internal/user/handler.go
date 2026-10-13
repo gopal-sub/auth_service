@@ -3,10 +3,10 @@ package user
 import (
 	"encoding/json"
 	"errors"
+	"gopal-sub/auth_service/internal/auth/oauth"
+	"gopal-sub/auth_service/internal/auth/oauth/google"
 	"gopal-sub/auth_service/internal/httputils"
 	"gopal-sub/auth_service/internal/validator"
-	"gopal-sub/auth_service/internal/auth/oauth/google"
-	"gopal-sub/auth_service/internal/auth/oauth"
 	"net/http"
 	// "net/url"
 	// "os"
@@ -34,11 +34,20 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 
 	queryValues := r.URL.Query()
 
-	if queryValues["oauthKind"][0]== "google"{
-		googleProvider := google.NewGoogleProvider()
-		handler := oauth.NewHandler(*googleProvider)
-		handler.OauthLogin(w, r)
+	if len(queryValues) > 0 {
+		val, ok := queryValues["oauthKind"]
+		if ok {
+			if val[0]== "google"{
+				googleProvider := google.NewGoogleProvider()
+				handler := oauth.NewHandler(*googleProvider)
+				handler.OauthLogin(w, r)
+				return 
+			}
+		}
+		
+		
 	}
+	
 
 	err := httputils.DecodeAndWriteError(w, r, &SignupReq)
 	if err != nil {

@@ -1,54 +1,45 @@
 package ratelimiter
 
 import (
-	"context"
-	"time"
-
-	"github.com/redis/go-redis/v9"
+	"gopal-sub/auth_service/internal/redis"
 )
 
 type rateLimiterRepo interface {
-	InsertRequest(email string, totalRequestsSent int) error
+	InsertRequest(email string, totalRequestsSent string) error
 	GetRequest(email string) (string, error)
 
 }
 
 type Repository struct{
-	repo *redis.Client
+	repo *redis.Repository
 }
 
-func NewRepo(rdb *redis.Client) *Repository{
+func NewRepo(repo *redis.Repository) *Repository{
 	return &Repository{
-		repo: rdb,
+		repo: repo,
 	}
 }
 
 
-func (i *Repository) InsertRequest(email string, totalRequestsSent int) error{
-	cxt := context.Background()
+func (r *Repository) InsertRequest(email string, totalRequestsSent string) error{
 	key := RedisKeyPrefix + email
-	duration, _ := i.repo.TTL(cxt, key).Result()
-	if duration == -2 *time.Nanosecond || duration == -1 *time.Nanosecond{
-		err := i.repo.Set(cxt, key, totalRequestsSent, TTL).Err()
+
+	err := r.repo.Insert(key, totalRequestsSent)
+	if err != nil {
 		return err
 	}
-
-	err := i.repo.Set(cxt, key, totalRequestsSent, duration).Err()
-	return err
+	return nil
 }
 
 
-func (i *Repository) GetRequest(email string) (string, error){
-	cxt := context.Background()
+func (r *Repository) GetRequest(email string) (string, error){
 	key := RedisKeyPrefix + email
-	val, err := i.repo.Get(cxt, key).Result()
-	if err == redis.Nil{
-		return "", err
-	}
-	if err != redis.Nil && err != nil {
-		return "", err
-	}
 
+	val, err := r.repo.Get(key)
+	if err != nil {
+		return "", err
+	}
 	return val, nil
+	
 }
 
