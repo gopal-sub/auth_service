@@ -3,7 +3,21 @@ package oauth
 import (
 	"net/url"
 )
+
+type ProviderEntity string
+
+const (
+	GOOGLE ProviderEntity = "GOOGLE"
+	GITHUB ProviderEntity = "GITHUB"
+)
+
+var ValidProvider = map[ProviderEntity] bool {
+	GOOGLE: true,
+	GITHUB: false,
+}
+
 type Provider struct {
+	ProviderEntity ProviderEntity
 	CliendID string
 	CliendSecret string
 	RedirectURI string

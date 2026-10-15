@@ -8,6 +8,7 @@ import (
 	rlimiter "gopal-sub/auth_service/internal/ratelimiter"
 	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/user"
+	"gopal-sub/auth_service/internal/auth/oauth"
 	"log"
 	"net/http"
 	"os"
@@ -48,7 +49,7 @@ func main(){
 	// userRepo and userservice init
 	userRepo := user.NewRepository(db)
 	userservice := user.NewService(userRepo)
-	userhandler := user.NewHandler(userservice)
+	userhandler := user.NewHandler(userservice, redisRepo)
 
 	//oauth init
 
@@ -83,10 +84,11 @@ func main(){
 
 	
 
-
-	router.HandleFunc("POST /user", userhandler.SignUpHandler)
+	//IMP: changed to GET for testing oauth change it back to POST
+	router.HandleFunc("GET /user", userhandler.SignUpHandler)
 	router.HandleFunc("POST /gettoken", userhandler.SigninHandler)
 	router.HandleFunc("POST /resetPassword", userhandler.PasswordReset)
+	router.HandleFunc("GET /google/callback", oauth.Handler)
 
 	// router.HandleFunc("GET /oauth", userhandler.OauthLogin)
 	// router.HandleFunc("GET /callback", )

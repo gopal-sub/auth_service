@@ -3,11 +3,14 @@ package user
 import (
 	"encoding/json"
 	"errors"
+	"gopal-sub/auth_service/internal/auth"
 	"gopal-sub/auth_service/internal/auth/oauth"
 	"gopal-sub/auth_service/internal/auth/oauth/google"
 	"gopal-sub/auth_service/internal/httputils"
+	"gopal-sub/auth_service/internal/redis"
 	"gopal-sub/auth_service/internal/validator"
 	"net/http"
+	"fmt"
 	// "net/url"
 	// "os"
 	// "strings"
@@ -19,11 +22,39 @@ import (
 
 type Handler struct{
 	svc UserService
+	Redis *redis.Repository
 }
 
-func NewHandler(svc UserService) *Handler{
+func NewHandler(svc UserService, redis *redis.Repository) *Handler{
 	return &Handler{
 		svc: svc,
+		Redis: redis,
+		
+	}
+}
+
+
+func (h *Handler)OauthBaseHandler (w http.ResponseWriter, r *http.Request){
+
+	queryParams := r.URL.Query()
+	provider, ok := queryParams["provider"]
+
+	if !ok {
+		fmt.Println("no provider present")
+		return
+	}
+
+
+	if !oauth.ValidProvider[oauth.ProviderEntity(provider[0])] {
+		// invalid provider or not supported
+		fmt.Println("provider not supported")
+	}
+
+	oauthHandler := oauth.NewHandler(h.Redis)
+	if oauth.ProviderEntity(provider[0]) == oauth.GOOGLE{
+		googleProvider := google.NewGoogleProvider()
+		oauthHandler.OauthCodeFlow(googleProvider, w, r)
+		
 	}
 }
 
@@ -31,22 +62,6 @@ func NewHandler(svc UserService) *Handler{
 
 func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request){
 	var SignupReq SignUpRequest
-
-	queryValues := r.URL.Query()
-
-	if len(queryValues) > 0 {
-		val, ok := queryValues["oauthKind"]
-		if ok {
-			if val[0]== "google"{
-				googleProvider := google.NewGoogleProvider()
-				handler := oauth.NewHandler(*googleProvider)
-				handler.OauthLogin(w, r)
-				return 
-			}
-		}
-		
-		
-	}
 	
 
 	err := httputils.DecodeAndWriteError(w, r, &SignupReq)

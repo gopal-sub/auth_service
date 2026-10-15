@@ -3,23 +3,28 @@ package oauth
 import (
 	"encoding/json"
 	"fmt"
+	"gopal-sub/auth_service/internal/redis"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
-	"io"
+
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/thanhpk/randstr"
 )
 
 type Handler struct {
-	Provider Provider
+	Redis *redis.Repository
 	
 }
 
-func NewHandler(Provider Provider) *Handler{
+func NewHandler(Redis *redis.Repository) *Handler{
 	return &Handler{
-		Provider: Provider,
+		Redis: Redis,
 	}
 }
+
+// svc => provider ?? 
 
 type Id_token struct{
 	AccessToken string `json:"access_token"`  
@@ -30,56 +35,114 @@ type Id_token struct{
 }
 
 
+
+
 // -------------------
 
-func (h *Handler) OauthLogin(w http.ResponseWriter, r *http.Request){
+func (h *Handler) OauthCodeFlow(provider *Provider, w http.ResponseWriter, r *http.Request){
 
-	clientID := h.Provider.CliendID
-	redirectURI := h.Provider.RedirectURI
+	clientID := provider.CliendID
+	redirectURI := provider.RedirectURI
+	state := randstr.String(10)
+
+	redisKey := RedisKeyPrefix + state
+	
+	h.Redis.Insert(redisKey, string(provider.ProviderEntity))
+	
 
 
 	params := url.Values{}
 	params.Add("client_id", clientID)
 	params.Add("redirect_uri", redirectURI)
-	params.Add("scope", h.Provider.Scope)
+	params.Add("scope", provider.Scope)
 	params.Add("response_type", "code")
+	params.Add("state", state)
 
-	authorisationEndPoint := h.Provider.AuthorisationEndPointBase + params.Encode()
+	authorisationEndPoint := provider.AuthorisationEndPointBase + params.Encode()
 
 
 	http.Redirect(w, r, authorisationEndPoint, http.StatusMovedPermanently)
 
 }
 
-func (h *Handler) OauthCallback(w http.ResponseWriter, r *http.Request) string{
+//callback handler should be indpendent
+
+func (h *Handler) OauthCallback(w http.ResponseWriter, r *http.Request){
 	//refactor this
 	
 	queryParams := r.URL.Query()
 
-	code := queryParams.Get("code")[0]
+	code := queryParams.Get("code")
+	state := queryParams.Get("state")
 	err := queryParams.Get("error")
 	if err != "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "oauth callbakc query param issue",
+			"error": "oauth callback query param issue",
 		})
 	}
-	return string(code)
+
+	if code != "" && state != "" {
+		providerEntity, err := h.OauthStateValidator(state)
+
+		token, err := GetToken(googleProvider, code, state)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "state invalid",
+			})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"token": token,
+		})
+
+		
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	json.NewEncoder(w).Encode(map[string]string{
+		"error": "no code or state ",
+	})
+	
+	
+}
+
+func (h *Handler) OauthStateValidator(state string) (ProviderEntity, error) {
+	//check if the state is valid 
+	redisKey := RedisKeyPrefix + state
+	providerEntity ,err := h.Redis.Get(redisKey)
+	if err != redis.KeydoesNotExist{
+		return "",StateDoesNotExist 
+	}
+	if err != nil {
+		return "", err
+	}
+	return ProviderEntity(providerEntity), nil
 
 }
 
-func (h *Handler) GetToken(code string){
+func GetToken(provider *Provider, code string, state string) (string, error){
+
+
+	
+	// if the control reaches here => state valid
 
 	data := url.Values{}
 
-	data.Add("client_id", h.Provider.CliendID)
-	data.Add("client_secret", h.Provider.CliendSecret)
+	data.Add("client_id", provider.CliendID)
+	data.Add("client_secret", provider.CliendSecret)
 	data.Add("code", code)
 	data.Add("grant_type", "authorization_code")
-	data.Add("redirect_uri", h.Provider.RedirectURI)
+	data.Add("redirect_uri", provider.RedirectURI)
+	data.Add("state", state)
 
-	res, _ := http.Post(h.Provider.TokenEndpoint, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	res, _ := http.Post(provider.TokenEndpoint, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 
 	body, _ := io.ReadAll(res.Body)
 	
@@ -95,5 +158,7 @@ func (h *Handler) GetToken(code string){
 	
 	fmt.Println(claims["email"])
 	fmt.Println(token)
+
+	return "", nil
 
 }

@@ -56,7 +56,7 @@ func (r *Repository) Get(key string) (string, error) {
 
 	val, err := r.redis.Get(cxt, key).Result()
 	if err == redis.Nil{
-		return "", err
+		return "", KeydoesNotExist
 	}
 	if err != redis.Nil && err != nil {
 		return "", err
